@@ -18,6 +18,8 @@ public class RobStage {
     // 拆好了一个红包，进入红包详情
     public static final int STAGE_OPENED_ENVELOPES = 1005;
 
+    public static boolean mutex = false;
+
 
 
     //------------------使用单例模式------------------//

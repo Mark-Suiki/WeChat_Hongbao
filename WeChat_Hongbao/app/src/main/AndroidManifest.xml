@@ -3,6 +3,8 @@
     package="cn.edu.uestc.wechat_hongbao">
 
     <uses-permission android:name="android.permission.BIND_ACCESSIBILITY_SERVICE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
 
     <application
         android:allowBackup="true"
@@ -14,6 +16,7 @@
         <service android:name=".AutoLuckyMoneyService"
             android:enabled="true"
             android:exported="true"
+            android:label="微信6.3.4抢红包服务"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE" >
             <intent-filter>
                 <action android:name="android.accessibilityservice.AccessibilityService" />

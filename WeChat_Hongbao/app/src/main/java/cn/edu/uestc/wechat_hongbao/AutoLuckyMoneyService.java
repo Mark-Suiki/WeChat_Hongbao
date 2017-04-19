@@ -98,6 +98,14 @@ public class AutoLuckyMoneyService extends AccessibilityService {
 
     }
 
+    @Override
+    public void onDestroy() {
+        nodeHashName = null;
+        nodeList = null;
+        handler = null;
+        Log.i(TAG, "Service destroyed");
+        super.onDestroy();
+    }
     // -------------------------------------------------------------------------- //
 
     private void wakeUnlock(Context context) {
@@ -162,13 +170,16 @@ public class AutoLuckyMoneyService extends AccessibilityService {
 
     private void getAllPackets(AccessibilityNodeInfo rootNode) {
         if (rootNode == null) return;
+
         switch (serviceMode) {
             case 1:
                 // 不监听最新的红包，将屏幕上所有红包都过一遍
                 if (flagOnGet) {
                     nodeList = rootNode.findAccessibilityNodeInfosByText("领取红包");
 
-//                    Toast.makeText(this, "We've got " + nodeList.size() + " packets", Toast.LENGTH_SHORT).show();
+                    // 去掉已经点击过的红包
+                    removeRobbedNodes(nodeList);
+                    Toast.makeText(this, "We've got " + nodeList.size() + " packets", Toast.LENGTH_SHORT).show();
                     MyHandler.index = nodeList.size() - 1;
                     flagOnGet = false;      // 阻塞，不让表更新
                 }
@@ -178,15 +189,21 @@ public class AutoLuckyMoneyService extends AccessibilityService {
             default:
                 nodeList = rootNode.findAccessibilityNodeInfosByText("领取红包");
                 if (!nodeList.isEmpty()) {
-                    Toast.makeText(this, "We've got " + nodeList.size() + " packets", Toast.LENGTH_SHORT).show();
+//                    Toast.makeText(this, "We've got " + nodeList.size() + " packets", Toast.LENGTH_SHORT).show();
 
                     // 始终获取最后一个
-
                     clickOpenPacket(nodeList.get(nodeList.size() - 1));
                 }
                 break;
         }
+    }
 
+    private void removeRobbedNodes(List<AccessibilityNodeInfo> list) {
+        if (list.isEmpty()) return;
+        for (int i = list.size() - 1; i >= 0; i--) {
+            if (nodeHashName.contains(getHongbaoHash(list.get(i))))
+                list.remove(i);
+        }
     }
 
     private void clickOpenPacket(AccessibilityNodeInfo node) {
@@ -298,9 +315,28 @@ public class AutoLuckyMoneyService extends AccessibilityService {
         return objHashMatcher.group(0);
     }
 
+//    /**
+//     * 要重新给listview赋值的话 需要把listViewNode重新置为null
+//     */
+//    private void findListViewNode(AccessibilityNodeInfo info) {
+//        if (info.getClassName().toString().contains("ListView")) {
+//            listViewNode = info;
+//        } else {
+//            for (int i = 0; i < info.getChildCount(); i++) {
+//                if (listViewNode != null)
+//                    return;
+//                if (info.getChild(i) != null) {
+//                    findListViewNode(info.getChild(i));
+//                }
+//            }
+//
+//        }
+//    }
+
     private static class MyHandler extends Handler {
         private WeakReference<AutoLuckyMoneyService> reference;
         private static final int FLAG_CLICK_PACKETS = 0x1001;
+        private static final int FLAG_RELEASE_MUTEX = 0x1002;
 
         private static int index;
 
@@ -311,18 +347,28 @@ public class AutoLuckyMoneyService extends AccessibilityService {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            if (index >= 0) {
-                String id = reference.get().getHongbaoHash(reference.get().nodeList.get(index));
-                if (id != null && reference.get().nodeHashName.add(id)) {
-                    reference.get().clickOpenPacket(reference.get().nodeList.get(index));
+            switch (msg.what) {
+                case MyHandler.FLAG_CLICK_PACKETS:
+                    if (index >= 0) {
+                        String id = reference.get().getHongbaoHash(reference.get().nodeList.get(index));
 
-                    Log.i(reference.get().TAG, "此节点的时间+标志位\t\t" + System.currentTimeMillis() + "\t" + id);
-                }
-                Log.i(reference.get().TAG, "Packet index is " + index);
-                index--;
+                        if (id != null && reference.get().nodeHashName.add(id)) {
+                            reference.get().clickOpenPacket(reference.get().nodeList.get(index));
+
+                            Log.i(reference.get().TAG, "此节点的时间+标志位\t\t" + System.currentTimeMillis() + "\t" + id);
+                        }
+//                Toast.makeText(reference.get(), "Packet index is " + index, Toast.LENGTH_SHORT).show();
+                        index--;
+                    }
+                    // 当红包已经拆完，需要重新获取界面上的红包
+                    if (index == -1)
+                        sendEmptyMessageDelayed(MyHandler.FLAG_RELEASE_MUTEX, 60);
+                    break;
+                case FLAG_RELEASE_MUTEX:
+                    reference.get().performGlobalAction(GLOBAL_ACTION_HOME);
+                    reference.get().flagOnGet = true;
+                    break;
             }
-            else if (index == -1)
-                reference.get().flagOnGet = true;
         }
     }
 }

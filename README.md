@@ -6,7 +6,7 @@ practice project to use AccessibilityNodeInfo and its service.
 **总结微信的特性，在2017年对红包插件已经有了较好的防护，具体如下：**<br>
 1.红包的UI更改了多次，如“拆红包”等，“看看其他人的手气”均不在了<br>
 2.ReceiveUI类（6.5.7中更为一串乱码）中的Button，过去“開”字是其text，目前整个控件用图片填充了<br>
-3.每次更新微信会重置大部分的控件id，因此findAccessibiilityNodeInfoByViewId(String text)需要适配版本
+3.每次更新微信会重置大部分的控件id，因此findAccessibiilityNodeInfoByViewId(String id)需要适配版本
 <br><br>
 **这个小练习的设计思路如下**<br>
 1. 分为两个模式<br>

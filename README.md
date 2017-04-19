@@ -1,7 +1,7 @@
 # WeChat_Hongbao
 practice project to use AccessibilityNodeInfo and its service.
 
-####在微信6.5.4上进行测试，练习掌握AccessibilityService的一些应用
+####在微信6.5.4上进行测试，练习掌握AccessibilityService的一些应用####
 <br>
 **总结微信的特性，在2017年对红包插件已经有了较好的防护，具体如下：**<br>
 1.红包的UI更改了多次，如“拆红包”等，“看看其他人的手气”均不在了<br>
@@ -23,4 +23,4 @@ practice project to use AccessibilityNodeInfo and its service.
 2.2.3. LuckyMoneyDetailUI，红包详情界面，回退<br>
 <br><br>
 由于红包详情界面回到聊天窗口时会触发微信LauncherUI里的方法，又可以获取屏幕上的红包了。<br>
-####不过，想要获取窗口中的全部红包，就需要设置flagOnGet为false，直到列表的节点全部领取了，置为true，等新红包
+####不过，想要获取窗口中的全部红包，就需要设置flagOnGet为false，直到列表的节点全部领取了，置为true，等新红包####

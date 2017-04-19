@@ -362,10 +362,9 @@ public class AutoLuckyMoneyService extends AccessibilityService {
                     }
                     // 当红包已经拆完，需要重新获取界面上的红包
                     if (index == -1)
-                        sendEmptyMessageDelayed(MyHandler.FLAG_RELEASE_MUTEX, 60);
+                        sendEmptyMessage(MyHandler.FLAG_RELEASE_MUTEX);
                     break;
                 case FLAG_RELEASE_MUTEX:
-                    reference.get().performGlobalAction(GLOBAL_ACTION_HOME);
                     reference.get().flagOnGet = true;
                     break;
             }

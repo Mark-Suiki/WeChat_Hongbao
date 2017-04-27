@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">WeChat_Hongbao</string>
+
+    <string name="accessibility_service_description">简单易用的辅助功能，支持微信6.5.4，普通模式收取通知栏中最新的那个红包；全取模式则将窗口中所有红包全部收取后，时刻敏锐寻找红包到来的通知</string>
+
 </resources>

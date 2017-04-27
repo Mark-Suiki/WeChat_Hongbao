@@ -11,16 +11,12 @@ import android.os.PowerManager;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
-import android.widget.Toast;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.logging.Logger;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,8 +28,11 @@ public class AutoLuckyMoneyService extends AccessibilityService {
     private final String TAG = getClass().getSimpleName();
 
     public static int serviceMode;
+    public static boolean flagOnGet = true;
 
-    private boolean flagOnGet = true;
+    private ExecutorService pool = Executors.newSingleThreadExecutor();
+    private TimerUtil instance = TimerUtil.getInstance();
+
     private List<AccessibilityNodeInfo> nodeList;
     private List<String> nodeHashName;
     private MyHandler handler;
@@ -134,6 +133,7 @@ public class AutoLuckyMoneyService extends AccessibilityService {
                 flagOnGet = true;
             }
             else {
+                instance.updateStartTime();
                 performGlobalAction(GLOBAL_ACTION_BACK);
                 nodeInfo.recycle();
             }
@@ -197,6 +197,7 @@ public class AutoLuckyMoneyService extends AccessibilityService {
 
                 break;
             default:
+                pool.shutdown();
                 nodeList = rootNode.findAccessibilityNodeInfosByText("领取红包");
                 if (!nodeList.isEmpty()) {
 //                    Toast.makeText(this, "We've got " + nodeList.size() + " packets", Toast.LENGTH_SHORT).show();
@@ -208,19 +209,20 @@ public class AutoLuckyMoneyService extends AccessibilityService {
         }
     }
 
-    private void removeRobbedNodes(List<AccessibilityNodeInfo> list) {
-        if (list.isEmpty()) return;
-        for (int i = list.size() - 1; i >= 0; i--) {
-            if (nodeHashName.contains(getHongbaoHash(list.get(i)))) {
-                list.remove(i);
-                Log.i(TAG, nodeHashName.get(i));
-            }
-        }
-    }
+//    private void removeRobbedNodes(List<AccessibilityNodeInfo> list) {
+//        if (list.isEmpty()) return;
+//        for (int i = list.size() - 1; i >= 0; i--) {
+//            if (nodeHashName.contains(getHongbaoHash(list.get(i)))) {
+//                list.remove(i);
+//                Log.i(TAG, nodeHashName.get(i));
+//            }
+//        }
+//    }
 
     private void clickOpenPacket(AccessibilityNodeInfo node) {
         AccessibilityNodeInfo clickableNode = findClickable(node);
 
+        pool.execute(instance.timerRunnable);
         if (clickableNode == null) return;
         clickableNode.performAction(AccessibilityNodeInfo.ACTION_CLICK);
     }
@@ -388,7 +390,7 @@ public class AutoLuckyMoneyService extends AccessibilityService {
                 case FLAG_RELEASE_MUTEX:
                     Log.i(reference.get().TAG, "FLAG_RELEASE_MUTEX running");
                     reference.get().performGlobalAction(GLOBAL_ACTION_HOME);
-                    reference.get().flagOnGet = true;
+                    AutoLuckyMoneyService.flagOnGet = true;
                     break;
             }
         }

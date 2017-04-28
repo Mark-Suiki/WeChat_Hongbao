@@ -1,11 +1,8 @@
 package cn.edu.uestc.wechat_hongbao;
 
 
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import android.accessibilityservice.AccessibilityService;
+import android.util.Log;
 
 /**
  * Created by uncon on 2017/4/24.
@@ -14,8 +11,10 @@ import java.util.concurrent.Executors;
  * 我们需要从第N个红包往上依次点开
  * 1.那么注意，在点击一个红包后会触发ListView往上推一点
  * 2.而且在群中会有其他人发消息，将红包推出聊天窗口
+ *
  * 所以在列表全取模式下，不可避免的会遇到最顶上的0号红包被顶出的情况
  * 1.此时，画面会留在聊天窗口，不会接收notification和WINDOW_CHANGED的Event
+ *
  * 这是因为此时的mutex不会自己解开，插件就会失效，因此采取如下措施
  * 1.获取到n个红包node以后，instance实例获取当时的时间tStart
  * 2.到达HongbaoDetail的页面的时候，子线程中获取结束时间tStop，与tStart相减
@@ -41,20 +40,6 @@ public class TimerUtil {
     public boolean isInitialed() {
         return tStart != tStop;
     }
-
-    public Runnable timerRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if (isInitialed()) return;
-            while (true) {
-                updateStopTime();
-                if (!isTimeOut()) {
-                    AutoLuckyMoneyService.flagOnGet = true;
-                    break;
-                }
-            }
-        }
-    };
 
     public void updateStartTime() {
         tStart = System.currentTimeMillis();

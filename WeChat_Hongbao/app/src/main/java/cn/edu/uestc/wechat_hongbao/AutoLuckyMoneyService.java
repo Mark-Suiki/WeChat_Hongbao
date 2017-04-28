@@ -35,7 +35,28 @@ public class AutoLuckyMoneyService extends AccessibilityService {
 
     private List<AccessibilityNodeInfo> nodeList;
     private List<String> nodeHashName;
-    private MyHandler handler;
+    public MyHandler handler;
+
+    public Runnable timerRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (instance.isInitialed()) return;
+            while (true) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException ie) {
+                    ie.printStackTrace();
+                }
+
+                instance.updateStopTime();
+                if (instance.isTimeOut()) {
+                    flagOnGet = true;
+                    goBackPage();
+                    Log.i(TAG, "flag now is set to " + flagOnGet);
+                }
+            }
+        }
+    };
 
     @Override
     protected void onServiceConnected() {
@@ -46,6 +67,7 @@ public class AutoLuckyMoneyService extends AccessibilityService {
         nodeList = new ArrayList<>();
         nodeHashName = new ArrayList<>();
         handler = new MyHandler(this);
+        if (pool.isShutdown()) pool.execute(timerRunnable);
         Log.i(TAG, "Service connected");
     }
 
@@ -105,6 +127,8 @@ public class AutoLuckyMoneyService extends AccessibilityService {
         nodeHashName = null;
         nodeList = null;
         handler = null;
+        instance = null;
+        pool.shutdown();
         Log.i(TAG, "Service destroyed");
         super.onDestroy();
     }
@@ -131,9 +155,7 @@ public class AutoLuckyMoneyService extends AccessibilityService {
             // 当红包已经拆完，停留在最后一个红包界面
             if (serviceMode == 0 || MyHandler.index == -1) {
                 flagOnGet = true;
-            }
-            else {
-                instance.updateStartTime();
+            } else {
                 performGlobalAction(GLOBAL_ACTION_BACK);
                 nodeInfo.recycle();
             }
@@ -197,7 +219,6 @@ public class AutoLuckyMoneyService extends AccessibilityService {
 
                 break;
             default:
-                pool.shutdown();
                 nodeList = rootNode.findAccessibilityNodeInfosByText("领取红包");
                 if (!nodeList.isEmpty()) {
 //                    Toast.makeText(this, "We've got " + nodeList.size() + " packets", Toast.LENGTH_SHORT).show();
@@ -222,8 +243,8 @@ public class AutoLuckyMoneyService extends AccessibilityService {
     private void clickOpenPacket(AccessibilityNodeInfo node) {
         AccessibilityNodeInfo clickableNode = findClickable(node);
 
-        pool.execute(instance.timerRunnable);
         if (clickableNode == null) return;
+        instance.updateStartTime();
         clickableNode.performAction(AccessibilityNodeInfo.ACTION_CLICK);
     }
 
